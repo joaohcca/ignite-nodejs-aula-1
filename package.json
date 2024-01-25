@@ -1,0 +1,13 @@
+{
+  "name": "01-fundamentals",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "node-version-20.11",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": [],
+  "author": "joaohcca",
+  "license": "ISC"
+}
