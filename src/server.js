@@ -18,6 +18,13 @@ import http from "node:http";
 
 //HEADERS - são metadadosque adicionam contexto aos dados transitados nos requests
 
+//HTTP Status Code
+// Information - 100~199
+// Sucess - 200~299
+// Redirection - 300~399
+// Client Error - 400~499
+// Server Error - 500~599
+
 const users = [];
 
 const server = http.createServer((req, res) => {
@@ -35,10 +42,10 @@ const server = http.createServer((req, res) => {
       email: "fulanodetal@examplo.com",
     });
 
-    return res.end(JSON.stringify(users));
+    return res.writeHead(201).end();
   }
 
-  return res.end("Hello Code 2");
+  return res.writeHead(404).end();
 });
 
 server.listen(3333);
