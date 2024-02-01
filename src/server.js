@@ -1,7 +1,9 @@
 import http from "node:http";
-import { randomUUID } from "node:crypto";
+
 import { json } from "./middlewares/json.js";
 import { Database } from "./database.js";
+import { routes } from "./routes.js";
+import { extractQueryParams } from "./utils/extract-query-params.js";
 
 // HTTP Methods
 //GET, POST, PUT, PATCH, DELETE
@@ -30,33 +32,31 @@ import { Database } from "./database.js";
 
 //UUID => Id único universal em string
 
-const database = new Database();
+//Query Parameters: URL Stateful => Filtros, paginação, não-obrigatórios
+// Get http://localhost:3333/users?userId=1&name=Joao
+//Route Parameters => Identificação de recurso
+// Delete http://localhost:3333/users/1
+//Request Body: Envio de informações de um formulário (HTTPs )
+//
 
 const server = http.createServer(async (req, res) => {
   const { method, url } = req;
 
   await json(req, res);
 
-  console.log(req.body);
+  const route = routes.find((route) => {
+    return route.method === method && route.path.test(url);
+  });
 
-  if (method === "GET" && url === "/users") {
-    const users = database.select("users");
+  if (route) {
+    const routeParams = req.url.match(route.path);
 
-    return res.end(JSON.stringify(users));
+    const { query, ...params } = routeParams.groups;
+    req.params = params;
+    req.query = query ? extractQueryParams(query) : {};
+
+    route.handler(req, res);
   }
-
-  if (method === "POST" && url === "/users") {
-    const { name, email } = req.body;
-    database.insert("users", {
-      id: randomUUID(),
-      name,
-      email,
-    });
-
-    return res.writeHead(201).end();
-  }
-
-  return res.writeHead(404).end();
 });
 
 server.listen(3333);
