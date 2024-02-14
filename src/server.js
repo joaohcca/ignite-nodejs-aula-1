@@ -1,5 +1,10 @@
 import http from "node:http";
 
+import { json } from "./middlewares/json.js";
+import { Database } from "./database.js";
+import { routes } from "./routes.js";
+import { extractQueryParams } from "./utils/extract-query-params.js";
+
 // HTTP Methods
 //GET, POST, PUT, PATCH, DELETE
 
@@ -25,27 +30,33 @@ import http from "node:http";
 // Client Error - 400~499
 // Server Error - 500~599
 
-const users = [];
+//UUID => Id único universal em string
 
-const server = http.createServer((req, res) => {
+//Query Parameters: URL Stateful => Filtros, paginação, não-obrigatórios
+// Get http://localhost:3333/users?userId=1&name=Joao
+//Route Parameters => Identificação de recurso
+// Delete http://localhost:3333/users/1
+//Request Body: Envio de informações de um formulário (HTTPs )
+//
+
+const server = http.createServer(async (req, res) => {
   const { method, url } = req;
 
-  if (method === "GET" && url === "/users") {
-    res.setHeader("content-type", "application/json");
-    return res.end(JSON.stringify(users));
+  await json(req, res);
+
+  const route = routes.find((route) => {
+    return route.method === method && route.path.test(url);
+  });
+
+  if (route) {
+    const routeParams = req.url.match(route.path);
+
+    const { query, ...params } = routeParams.groups;
+    req.params = params;
+    req.query = query ? extractQueryParams(query) : {};
+
+    route.handler(req, res);
   }
-
-  if (method === "POST" && url === "/users") {
-    users.push({
-      id: 1,
-      name: "Fulano de Tal",
-      email: "fulanodetal@examplo.com",
-    });
-
-    return res.writeHead(201).end();
-  }
-
-  return res.writeHead(404).end();
 });
 
 server.listen(3333);
